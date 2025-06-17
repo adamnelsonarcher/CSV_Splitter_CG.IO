@@ -24,27 +24,34 @@ column_renames = {
     "COURSE_DESCR": "COURSE DESCR",
     "INSTR_LAST_NAME": "INSTR LAST NAME",
     "INSTR_FIRST_NAME": "INSTR FIRST NAME",
-    "SASTISFACTORY": "SATISFACTORY",  # fix typo
+    "SASTISFACTORY": "SATISFACTORY",  # fix typo, haha
     "NOT_REPORTED": "NOT REPORTED",
     "TOTAL_DROPPED": "TOTAL DROPPED",
     "AVG_GPA": "AVG GPA"
 }
 
-# Apply renaming
+# Rename columns
 df.rename(columns=column_renames, inplace=True)
 
-# Remove columns that don't exist
+# Remove missing columns from expected list
 valid_columns = [col for col in expected_columns if col in df.columns]
 df = df[valid_columns]
 
-# === Step 3: Create output directory ===
+# === Step 3: Output Directory ===
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# === Step 4: Split and save per term ===
-for term in df['TERM'].dropna().unique():
-    year, season = term.split()
-    output_filename = f"{year}_{season}.csv"
-    output_path = os.path.join(OUTPUT_DIR, output_filename)
-    df[df['TERM'] == term].to_csv(output_path, index=False)
+# === Step 4: Mapping for season codes ===
+season_code = {"Spring": "01", "Summer": "02", "Fall": "03"}
 
-print("Corrected and split CSVs saved to:", os.path.abspath(OUTPUT_DIR))
+# === Step 5: Split and save files ===
+for term in df['TERM'].dropna().unique():
+    try:
+        season, year = term.split()
+        code = season_code[season]
+        filename = f"Grade Distribution {year}-{code} ({season} {year}).csv"
+        path = os.path.join(OUTPUT_DIR, filename)
+        df[df['TERM'] == term].to_csv(path, index=False)
+    except Exception as e:
+        print(f"Error processing term '{term}': {e}")
+
+print("All CSVs saved using official naming format in:", os.path.abspath(OUTPUT_DIR))
